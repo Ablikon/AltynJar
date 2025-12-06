@@ -364,8 +364,20 @@ function App() {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '';
       const res = await fetch(`${apiUrl}/api/notes`);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
       const data = await res.json();
-      setNotes(data);
+      
+      // Проверяем что data это массив
+      if (Array.isArray(data)) {
+        setNotes(data);
+      } else {
+        console.error('API returned non-array data:', data);
+        setNotes([]);
+      }
     } catch (error) {
       console.error('Error fetching notes:', error);
       setNotes([]);

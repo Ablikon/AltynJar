@@ -1,0 +1,9 @@
+.env
+.env.local
+.vercel
+node_modules
+uploads
+Tree/.env.local
+Tree/.env.production
+*.log
+.DS_Store

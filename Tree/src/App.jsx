@@ -5,8 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 import './App.css';
 
-// Улучшенная стеклянная банка
-function GlassJar() {
+// Оптимизация стеклянной банки
+function GlassJar({ isMobile }) {
+  const samples = isMobile ? 16 : 32;
+  const resolution = isMobile ? 512 : 1024;
+  
   return (
     <group position={[0, 0, 0]}>
       {/* Основное тело */}
@@ -14,8 +17,8 @@ function GlassJar() {
         <cylinderGeometry args={[1.8, 2, 3.5, 64, 1]} />
         <MeshTransmissionMaterial
           backside
-          samples={32}
-          resolution={1024}
+          samples={samples}
+          resolution={resolution}
           transmission={0.98}
           roughness={0.02}
           thickness={0.3}
@@ -36,8 +39,8 @@ function GlassJar() {
         <cylinderGeometry args={[1.3, 1.4, 0.5, 64]} />
         <MeshTransmissionMaterial
           backside
-          samples={32}
-          resolution={1024}
+          samples={samples}
+          resolution={resolution}
           transmission={0.98}
           roughness={0.02}
           thickness={0.2}
@@ -83,8 +86,8 @@ function GlassJar() {
         <cylinderGeometry args={[2, 2, 0.15, 64]} />
         <MeshTransmissionMaterial
           backside
-          samples={16}
-          resolution={512}
+          samples={isMobile ? 8 : 16}
+          resolution={isMobile ? 256 : 512}
           transmission={0.95}
           roughness={0.05}
           thickness={0.4}
@@ -96,8 +99,8 @@ function GlassJar() {
   );
 }
 
-// Улучшенная записка с фото
-function FloatingNote({ text, index, total, color, type, photo }) {
+// Оптимизация записок
+function FloatingNote({ text, index, total, color, type, photo, isMobile }) {
   const meshRef = useRef();
   const [hovered, setHovered] = useState(false);
   const [texture, setTexture] = useState(null);
@@ -164,8 +167,8 @@ function FloatingNote({ text, index, total, color, type, photo }) {
     <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.5}>
       <mesh 
         ref={meshRef}
-        castShadow
-        receiveShadow
+        castShadow={!isMobile}
+        receiveShadow={!isMobile}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
@@ -192,12 +195,11 @@ function FloatingNote({ text, index, total, color, type, photo }) {
   );
 }
 
-// Летающие сердечки
-function FloatingHearts() {
+// Оптимизация сердечек
+function FloatingHearts({ count = 20 }) {
   const heartsRef = useRef();
-  const heartCount = 20;
   
-  const hearts = Array.from({ length: heartCount }, (_, i) => ({
+  const hearts = Array.from({ length: count }, (_, i) => ({
     position: [
       (Math.random() - 0.5) * 10,
       Math.random() * 8 - 2,
@@ -271,7 +273,8 @@ function Scene({ notes, isMobile }) {
     memory: '#87ceeb'
   };
   
-  const cameraPosition = isMobile ? [0, 0, 12] : [0, 0, 9];
+  // Небольшая оптимизация только для мобильных
+  const cameraPosition = isMobile ? [0, 0, 11] : [0, 0, 9];
   
   return (
     <>
@@ -285,8 +288,8 @@ function Scene({ notes, isMobile }) {
         position={[8, 12, 5]} 
         intensity={1.2} 
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={isMobile ? 1024 : 2048}
+        shadow-mapSize-height={isMobile ? 1024 : 2048}
       />
       <pointLight position={[-8, -8, -5]} intensity={0.6} color="#ff69b4" />
       <pointLight position={[8, 5, 8]} intensity={0.4} color="#87ceeb" />
@@ -296,11 +299,11 @@ function Scene({ notes, isMobile }) {
         penumbra={1} 
         intensity={1}
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={isMobile ? 1024 : 2048}
+        shadow-mapSize-height={isMobile ? 1024 : 2048}
       />
       
-      <GlassJar />
+      <GlassJar isMobile={isMobile} />
       
       {notes.map((note, i) => (
         <FloatingNote
@@ -474,12 +477,15 @@ function App() {
       <div className="canvas-container">
         <Canvas 
           shadows 
-          dpr={[1, 2]}
+          dpr={isMobile ? [1, 1.5] : [1, 2]} // Меньше пикселей на мобильных
           gl={{ 
             antialias: true,
             alpha: false,
-            powerPreference: "high-performance"
+            powerPreference: "high-performance",
+            stencil: false,
+            depth: true
           }}
+          performance={{ min: 0.5 }} // Автоматическое снижение качества при лагах
         >
           <Suspense fallback={null}>
             <Scene notes={notes} isMobile={isMobile} />
